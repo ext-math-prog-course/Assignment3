@@ -1,3 +1,28 @@
+
+function lexico_minimum(q, B, d, contention; tol=1e-6)
+    n, m = size(B)
+    min_val = minimum(q[contention] ./ d[contention])
+    for i = 1:n
+        if (contention[i] && ((q[i] / d[i]) > (min_val + tol)))
+            contention[i] = false
+        end
+    end
+    if count(contention) > 1
+        Bi = inv(B)
+        for j = 1:m
+            min_val = minimum(Bi[contention, j] ./ d[contention])
+
+            for i = 1:n
+                if (contention[i] && ((Bi[i, j] / d[i]) > (min_val + tol))) 
+                    contention[i] = false
+                end
+            end
+            count(contention) == 1 && break
+        end
+    end
+    return argmax(contention)
+end
+
 """
 Solve
 
@@ -18,7 +43,7 @@ where ret =
     
 It is assumed that the vector q is nondegenerate.
 """
-function solve_lcp(M, q; tol=1e-6)
+function solve_lcp(M, q; max_iters=50, tol=1e-6, debug=true)
     n = length(q)
     if size(M) != (n,n)
         w = q
@@ -32,9 +57,45 @@ function solve_lcp(M, q; tol=1e-6)
         ret = 1
         return (; w, z, ret)
     end
-    # TODO CHANGE ME
+
+    T = [I(n) -M -ones(n) q]
+    A = [I(n) -M -ones(n)]
+    basis = collect(1:n)
+    t = argmin(q)
+
+    basis[t] = 2n+1
+
+    pivot = T[t, :] ./ T[t, 2n + 1]
+    T -= T[:, 2n + 1] * pivot'
+    T[t, :] = pivot
+
+    entering_ind = t+n
+    iters = 0
     ret = 1
-    w = zeros(n)
-    z = zeros(n)
+    while 2*n+1 in basis
+        d = T[:, entering_ind]
+        B = A[:, basis]
+        q = T[:, end]
+        contention = d .> tol
+        if !any(contention)
+            ret = 0
+            break
+        else
+            t = lexico_minimum(q, B, d, contention)
+            pivot = T[t, :] ./ T[t, entering_ind]
+            T -= T[:, entering_ind] * pivot'
+            T[t, :] = pivot
+            exiting_ind = basis[t]
+            basis[t] = entering_ind
+            entering_ind = mod(exiting_ind + n, 2n)
+            if entering_ind == 0
+                entering_ind = 2n
+            end
+        end
+    end
+    vars = zeros(Float64, 2n+1)
+    vars[basis] = T[:, end]
+    w = vars[1:n]
+    z = vars[n+1:2n]
     return (; w, z, ret)
 end
