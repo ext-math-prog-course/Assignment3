@@ -17,7 +17,8 @@
    Consider the problem:
 
    x_opt = argmin_x  (x-w)^2
-           s.t.    x >= 0
+   
+   s.t.    x >= 0
 
    Define the piecewise-linear function which maps w->x_opt. Call this function
    K(w).
@@ -25,7 +26,8 @@
    Now consider the following problem:
 
    (w_opt, x_opt) = argmin_(w,x) ([x; w] - [v1; v2])'([x; w] - [v1; v2])
-                    s.t.          x = K(w)
+   
+   s.t.          x = K(w)
 
    Define the piecewise-linear function which maps (v1,v2)->(w_opt, x_opt). 
 
