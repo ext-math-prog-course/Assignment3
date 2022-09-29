@@ -1,6 +1,5 @@
-
-function lexico_minimum(q, B, d, contention; tol=1e-6)
-    n, m = size(B)
+function lexico_minimum(q, Bi, d, contention; tol=1e-6)
+    n = length(q)
     min_val = minimum(q[contention] ./ d[contention])
     for i = 1:n
         if (contention[i] && ((q[i] / d[i]) > (min_val + tol)))
@@ -8,8 +7,7 @@ function lexico_minimum(q, B, d, contention; tol=1e-6)
         end
     end
     if count(contention) > 1
-        Bi = inv(B)
-        for j = 1:m
+        for j = 1:n
             min_val = minimum(Bi[contention, j] ./ d[contention])
 
             for i = 1:n
@@ -81,7 +79,7 @@ function solve_lcp(M, q; max_iters=50, tol=1e-6, debug=true)
             ret = 0
             break
         else
-            t = lexico_minimum(q, B, d, contention)
+            t = lexico_minimum(q, T[:,1:n], d, contention)
             pivot = T[t, :] ./ T[t, entering_ind]
             T -= T[:, entering_ind] * pivot'
             T[t, :] = pivot
